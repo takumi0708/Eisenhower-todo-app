@@ -9,6 +9,7 @@ function App() {
   const [memos, setMemos] = useState<string[]>([]);
 
   // APIからメモ取得（バックエンドからAPI経由でフロントへ）
+  // GET：メモ一覧を取得してる
   async function fetchMemos() {
     try {
       const response = await fetch("http://localhost:3001/memos");
@@ -37,17 +38,43 @@ function App() {
   }, []);
 
 
-  // メモ追加関数
-  // いろんな処理をまとめてるから関数にしてる
-  function addMemo() {
+  // POST：新たなメモを追加
+  // バックエンドに行って追加
+  async function addMemo() {
     // 空　スペースなら追加しない
     if (memo.trim() === "") return;
 
-    // 既存の配列にメモ追加
-    // ...はすべてを展開するスプレッド構文という
-    setMemos([...memos, memo]);
-    // 入力欄を空に
-    setMemo("");
+    try {
+      // ExpressにPOSTリクエスト
+      const response = await fetch(
+        "http://localhost:3001/memos",
+        {
+          method: "POST",
+
+          // このデータはJOSNだとexpressに伝える
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          // jsをJSONに変換
+          body: JSON.stringify({
+            text: memo,
+          }),
+        }
+      );
+
+      // 通信の確認
+      if (!response.ok) {
+        throw new Error("メモの追加に失敗");
+      }
+
+      setMemo("");
+
+      // 最新のメモ一覧をサーバーから取得
+      await fetchMemos();
+    } catch (error) {
+      console.error("POSTエラー", error);
+    }
   }
 
   return (

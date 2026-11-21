@@ -32,9 +32,34 @@ app.get("/memos", (req, res) => {
 
 });
 
+// POST：新たなメモ追加
+app.post("/memos", (req, res) => {
+
+    // Reactから来たJSONのtext取得
+    const text: unknown = req.body?.text;
+
+    // 文字列でない、空の時
+    if (typeof text !== "string" || text.trim() === "") {
+
+        // HTTPステータスコード 400（Bad Request)
+        // エラー理由をJSONで（統一してるだけ）
+        return res.status(400).json({
+            error: "メモを入力してください",
+        });
+    }
+
+    // 追加
+    memos.push(text.trim());
+
+    // 201: データ作成成功
+    res.status(201).json({
+        message: "メモを追加しました",
+    });
+});
+
 // サーバーを起動する(3001を開放)
 //listen メソッドは、Express で作ったサーバー（app）に対して、
 // 「指定したポート番号（今回の PORT = 3001）でアクセスを待ち受け始めなさい！」と命令するための関数
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
-})
+});
