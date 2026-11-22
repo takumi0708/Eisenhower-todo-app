@@ -1,0 +1,23 @@
+// DBの設計図。
+// ここで model Memo（id と text を持つ表の構造）を定義する
+
+generator client {
+  // TypeScriptから使うPrisma Clientを生成
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  // SQLiteを使用
+  provider = "sqlite"
+}
+
+// メモを保存するテーブルの設計図
+// @->主キー
+model Memo {
+  // 自動で増える一意の番号
+  id Int @id @default(autoincrement())
+
+  // メモの本文
+  text String
+}

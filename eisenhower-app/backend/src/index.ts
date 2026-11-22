@@ -18,6 +18,7 @@ app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 
 // 今回はまだDB使わず配列
+// これはメモリ上なので揮発性
 const memos: string[] = [
     "learn ts",
     "learn react",
