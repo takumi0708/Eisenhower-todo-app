@@ -1,8 +1,9 @@
 {
+    // backendのファルダ内のtsをどんなルール、環境デコンパイルするか決める設定ファイル
     "compilerOptions": {
-        "target": "ES2022",
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
+        "target": "ES2023",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,

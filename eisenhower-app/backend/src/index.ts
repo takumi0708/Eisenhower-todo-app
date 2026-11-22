@@ -1,8 +1,11 @@
 import express from "express";
 import cors from "cors"; // Reactから別ポートAPIにアクセスできる
-import { expectFailure } from "node:test";
-import { listen } from "node:quic";
-// 5173ポート（フロントエンド）からAPIで3001ポート（バックエンド）へ移動など 
+
+// DB接続用のPrismaを読み込む
+import { prisma } from "./db";
+import { error } from "node:console";
+
+
 
 // Expressアプリを作成
 const app = express();
@@ -15,26 +18,54 @@ const PORT = 3001;
 // それをexpress のAPIでuseしてるイメージ
 app.use(cors({ origin: "http://localhost:5173" }));
 
+// JSON形式のリクエストを読み取る
 app.use(express.json());
 
-// 今回はまだDB使わず配列
-// これはメモリ上なので揮発性
-const memos: string[] = [
-    "learn ts",
-    "learn react",
-];
+// // 今回はまだDB使わず配列
+// // これはメモリ上なので揮発性
+// const memos: string[] = [
+//     "learn ts",
+//     "learn react",
+// ];
 
-// GET / memosにアクセスされたとき(by react)
-app.get("/memos", (req, res) => {
+
+// ==================================
+// GET：DBからメモ一覧を取得
+// ==================================
+app.get("/memos", async (req, res) => {
     // 1つ目（req）：クライアントからの要求（リクエスト）
     // 2つ目（res）：サーバーからの返答（レスポンス）
     // メモの配列をJSONで/memosの画面に返す
-    res.json(memos);
+    try {
+        // / DBのMemoテーブルを全権取得
+        // findManyで複数取得
+        // オブジェクトを引数にしてるから{}
+        // ここにSQLっぽい指定を入れれる
+        const memos = await prisma.memo.findMany({
+            orderBy: { id: "asc" },
+        });
+
+        // JSONでReactに返す
+        res.json(memos);
+    } catch (error) {
+        console.log("GETエラー", error);
+
+        res.status(500).json({
+            error: "メモ取得失敗",
+        });
+    }
+
 
 });
 
-// POST：新たなメモ追加
-app.post("/memos", (req, res) => {
+
+
+// ==================================
+// POST：DBに新しいメモを保存
+// ==================================
+
+// local/memosにPOSTが来た時の処理
+app.post("/memos", async (req, res) => {
 
     // Reactから来たJSONのtext取得
     const text: unknown = req.body?.text;
@@ -44,18 +75,29 @@ app.post("/memos", (req, res) => {
 
         // HTTPステータスコード 400（Bad Request)
         // エラー理由をJSONで（統一してるだけ）
-        return res.status(400).json({
-            error: "メモを入力してください",
-        });
+        res.status(400).json({
+            error: "メモ入力してください",
+        })
+        return;
     }
 
-    // 追加
-    memos.push(text.trim());
+    try {
+        // DBのMemoに新たな行を追加
+        const newMemo = await prisma.memo.create({
+            data: {
+                text: text.trim(),
+            },
+        });
 
-    // 201: データ作成成功
-    res.status(201).json({
-        message: "メモを追加しました",
-    });
+        // 保存メモをReactに返す
+        res.status(201).json(newMemo);
+    } catch (error) {
+        console.log("POST エラー", error);
+
+        res.status(500).json({
+            error: "メモの保存に失敗",
+        });
+    }
 });
 
 // サーバーを起動する(3001を開放)

@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
 
+// DBから返されるメモ1件分の型
+type Memo = {
+  id: number;
+  text: string;
+};
+
 function App() {
   // stringを保存できる状態(state)を作り、最初は空文字にする
   // setMemoでmemoを変更できる
   const [memo, setMemo] = useState<string>("");
 
   // 追加されたメモ一覧　配列で管理
-  const [memos, setMemos] = useState<string[]>([]);
+  const [memos, setMemos] = useState<Memo[]>([]);
+
+  // エラーメッセージ
+  const [error, setError] = useState<string>("");
 
   // APIからメモ取得（バックエンドからAPI経由でフロントへ）
   // GET：メモ一覧を取得してる
@@ -20,10 +29,12 @@ function App() {
       }
 
       // JSONをjsに変換(描画するため)
-      const data: string[] = await response.json();
+      const data: Memo[] = await response.json();
 
       // 取得メモでReactの描画
       setMemos(data);
+      setError("");
+
     } catch (error) {
       console.error("API通信エラー, error");
     }
@@ -93,12 +104,18 @@ function App() {
         追加
       </button>
 
+      {/* 通信エラーあれば表示 */}
+      {error && <p role="alert">{error}</p>}
+
+
       <h2>メモ一覧</h2>
 
       {/* 配列のメモを1件ずつ表示 mapを用いて */}
       <ul>
-        {memos.map((item, index) => (
-          <li key={index}>{item}</li>
+        {memos.map((item) => (
+          <li key={item.id}>
+            {item.text}
+          </li>
         ))}
       </ul>
     </div>
