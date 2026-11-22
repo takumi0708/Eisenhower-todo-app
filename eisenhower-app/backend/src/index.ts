@@ -4,6 +4,7 @@ import cors from "cors"; // Reactから別ポートAPIにアクセスできる
 // DB接続用のPrismaを読み込む
 import { prisma } from "./db";
 import { error } from "node:console";
+import { Param } from "@prisma/client/runtime/client";
 
 
 
@@ -99,6 +100,84 @@ app.post("/memos", async (req, res) => {
         });
     }
 });
+
+// ==================================
+// DELETE：指定したIDのメモを削除
+// ==================================
+app.delete("/memos/:id", async (req, res) => {
+    // 削除対象のID取得
+    // paramsでURLの動的な部分の取り出し
+    const id = Number(req.params.id);
+
+    // IDチェック
+    if (!Number.isSafeInteger(id) || id <= 0) {
+        res.status(400).json({
+            error: "正しいIDを入力してください",
+        });
+        return
+    }
+
+    try {
+        // Prismaで指定IDの削除
+        await prisma.memo.delete({
+            // 場所の指定
+            where: {
+                id: id,
+            },
+        });
+    } catch (error) {
+        console.log("DELETEエラー", error);
+
+        // 削除対象がないエラー
+        res.status(500).json({
+            error: "メモを削除できませんでした",
+        });
+    }
+});
+
+
+// ==================================
+// PUT：指定したIDのメモを編集
+// ==================================
+app.put("/memos/:id", async (req, res) => {
+
+    const id = Number(req.params.id);
+
+
+    // Reactからくる編集後の新たな文章
+    const text: unknown = req.body?.text;
+
+    // ④ 本文が空文字や不正な型でないか確認
+    if (typeof text !== "string" || text.trim() === "") {
+        res.status(400).json({
+            error: "メモを入力してください",
+        });
+        return;
+    }
+
+    try {
+        // PrismaでDBの対象のメモを更新
+        const updateMemo = await prisma.memo.update({
+            where: {
+                id: id,
+            },
+            data: {
+                text: text.trim(),
+            },
+        });
+        // 更新後のデータをReactに返す
+        res.status(200).json(updateMemo);
+
+    } catch (error) {
+        console.log("PUTエラー", error);
+
+        res.status(500).json({
+            error: "メモを更新できませんでした",
+        });
+    }
+});
+
+
 
 // サーバーを起動する(3001を開放)
 //listen メソッドは、Express で作ったサーバー（app）に対して、
