@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 
-// DBから返されるメモ1件分の型
-type Memo = {
-  id: number;
-  text: string;
-};
+import type { Memo } from "./types/memo";
 
 function App() {
   // stringを保存できる状態(state)を作り、最初は空文字にする
